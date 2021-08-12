@@ -3,6 +3,7 @@ import './Tab.css';
 
 const Tab = ({ data, id }) => {
     const [selectedTab, setSelectedTab] = useState(null);
+    const [focusedTab, setFocusedTab] = useState(null);
     const [currentURL, setCurrentURL] = useState(window.location.href);
     const inputRef = useRef([]);
     const hostURL = currentURL && currentURL.split('#')[0];
@@ -17,29 +18,31 @@ const Tab = ({ data, id }) => {
         }
     })
 
-    /*on right arrow click - get the next tab*/
-    const getNextTab = useCallback(() => {
-        const selectedTabIndex = data.findIndex(item => item.link === selectedTab);
-        return (selectedTabIndex === data.length - 1) ? data[0] : data[selectedTabIndex + 1];
-    }, [data, selectedTab]);
+    /*on right arrow click - get the next focused tab*/
+    const getNextFocusedTab = useCallback(() => {
+        const focusedTabIndex = data.findIndex(item => item.link === focusedTab);
+        return (focusedTabIndex === data.length - 1) ? data[0] : data[focusedTabIndex + 1];
+    }, [data, focusedTab]);
 
-     /*on left arrow click - get the previous tab*/
-    const getPrevSelectedTab = useCallback(() => {
-        const selectedTabIndex = data.findIndex(item => item.link === selectedTab);
-        return (selectedTabIndex === 0) ? data[data.length - 1] : data[selectedTabIndex - 1];
-    }, [data, selectedTab]);
+     /*on left arrow click - get the previous focused tab*/
+    const getPrevFocusedTab = useCallback(() => {
+        const focusedTabIndex = data.findIndex(item => item.link === focusedTab);
+        return (focusedTabIndex === 0) ? data[data.length - 1] : data[focusedTabIndex - 1];
+    }, [data, focusedTab]);
 
     /* handle left right arrow key press */
     const handleUserKeyPress = useCallback(event => {
         const { keyCode } = event;
         if (keyCode === 39) {//right arrow key 
-            const nextTab = getNextTab();
+            const nextTab = getNextFocusedTab();
             inputRef.current[nextTab.link].focus();
+            setFocusedTab(nextTab.link);
         } else if (keyCode === 37) {//left arrow key 
-            const prevTab = getPrevSelectedTab();
+            const prevTab = getPrevFocusedTab();
             inputRef.current[prevTab.link].focus();
+            setFocusedTab(prevTab.link);
         }
-    }, [getNextTab, getPrevSelectedTab]);
+    }, [getNextFocusedTab, getPrevFocusedTab]);
 
     /* set the selected tab - considering query param */
     const setSelectedCurrentTab = () => {
@@ -64,6 +67,7 @@ const Tab = ({ data, id }) => {
         inputRef.current[data[0].link].focus();
         setCurrentURL(hostURL + `#${id}=${data[0].link}`);
         setSelectedTab(data[0].link);
+        setFocusedTab(data[0].link);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -78,11 +82,13 @@ const Tab = ({ data, id }) => {
     /* set focus on change of selected tab */
     useEffect(() => {
         selectedTab && inputRef.current[selectedTab].focus();
+        setFocusedTab(selectedTab);
     }, [selectedTab]);
 
     const updateLocationURL = (link) => {
         window.location.href = hostURL + `#${id}=${link}`;
         inputRef.current[link] && inputRef.current[link].focus();
+        setFocusedTab(link);
     }
 
     /* hanlde tab click - by selecting tab and updating location URL*/
